@@ -52,8 +52,6 @@ void GPIO_Configuration(void){
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(DCF_INPUT_GPIO_PORT, &GPIO_InitStruct);
 
-  /* Configure the LED_pin as output push-pull for LD3 & LD4 usage*/
-
   /**
    * @brief Configure 2 LED pins
    */
@@ -62,6 +60,18 @@ void GPIO_Configuration(void){
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
   HAL_GPIO_Init(LEDs_GPIO_PORT, &GPIO_InitStruct);
+
+  /**
+   * @brief Configure 2 RELAY pins
+   */
+
+  GPIO_InitStruct.Pin = RELAY_1 | RELAY_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init(RELAY_GPIO_PORT, &GPIO_InitStruct);
+
+
 }
 
 

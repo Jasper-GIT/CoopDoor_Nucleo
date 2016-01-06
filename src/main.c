@@ -107,6 +107,13 @@ int main(void){
   GPIO_Configuration();
   //MX_RTC_Init();
 
+  /*
+   * Switch RELAYS OFF
+   * */
+  RELAY_1_LOW();
+  RELAY_2_LOW();
+
+
   //SetTime_Configuration(0x09, 0x37);
   //SetDate_Configuration(0x0F, 0x0B, 0x12);
  // Update_RTC();
