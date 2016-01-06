@@ -109,6 +109,7 @@ int main(void){
 
   /*
    * Switch RELAYS OFF
+   *
    * */
   RELAY_1_LOW();
   RELAY_2_LOW();

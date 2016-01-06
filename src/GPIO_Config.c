@@ -25,7 +25,10 @@ void GPIO_Configuration(void){
   RELAY_GPIO_CLK_ENABLE();
 */
 
-
+  /*
+   * Set alarm irq prio.
+   * Dont know why it is here, so this can be placed somewhere else.
+   * */
   HAL_NVIC_SetPriority(RTC_Alarm_IRQn, 0, 2);
   HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn);
 
