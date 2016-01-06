@@ -54,7 +54,6 @@ int main(void){
 	RTC_DateTypeDef ds;
 	uint8_t Hours = 0;
 	uint8_t Minutes = 0;
-	uint8_t Seconds = 0;
 	int SunSet;
 	int SunSetLT;
 	int SunRise;
@@ -64,8 +63,6 @@ int main(void){
 	uint8_t rtc_day;
 	float JD; // This is the Julian Date
 	SunSetCalculationFlag = true;
-	uint8_t Close;
-	uint8_t Open;
 
 	/* The folowing integers are for testing purpose,
 	 * Here we can set the y/m/d to write into RTC
@@ -122,8 +119,10 @@ int main(void){
 	  /*Convert the received HMS in BCD format to DEC format*/
 	  Hours   = bcd2dec(ts.Hours);
 	  Minutes = bcd2dec(ts.Minutes);
+	  /*
+	   * Seconds is not used
 	  Seconds = bcd2dec(ts.Seconds);
-
+	   */
 	  /*Calculate the SunSet time
 	   * When user button is pressed, or when RTC Alarm goes on
 	   */
