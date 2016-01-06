@@ -58,7 +58,7 @@ int main(void){
 	int SunSetLT;
 	int SunRise;
 	int SunRiseLT;
-	uint8_t rtc_year;
+	uint16_t rtc_year;
 	uint8_t rtc_month;
 	uint8_t rtc_day;
 	float JD; // This is the Julian Date
@@ -67,10 +67,11 @@ int main(void){
 	/* The folowing integers are for testing purpose,
 	 * Here we can set the y/m/d to write into RTC
 	 */
-	//int year = 2016;
-	//int month = 1;
-	//int day = 6;
-
+	int year = 16;
+	int month = 1;
+	int day = 6;
+	int hour = 16;
+	int minutes = 44;
 	/* The door will be closed after Sunset + Extra minutes.
 	 * these minutes can be different for winter and summer
 	 */
@@ -86,7 +87,7 @@ int main(void){
 
 	/* GPS Location @home LAT/LON */
 	double latitude = 51.50;
-	double longitude = -51.46;
+	double longitude = -5.46;
 
   /* STM32L1xx HAL library initialization:
        - Configure the Flash prefetch
@@ -104,12 +105,14 @@ int main(void){
   RCC_Configuration();
   RTC_Configuration();
   GPIO_Configuration();
-//  MX_RTC_Init();
+  //MX_RTC_Init();
 
   //SetTime_Configuration(0x09, 0x37);
   //SetDate_Configuration(0x0F, 0x0B, 0x12);
  // Update_RTC();
-
+  SetDate_Configuration(year, month, day);
+  HAL_Delay(200);
+  SetTime_Configuration(hour, minutes);
 
   while (1)
   {
@@ -119,21 +122,28 @@ int main(void){
 	  /*Convert the received HMS in BCD format to DEC format*/
 	  Hours   = bcd2dec(ts.Hours);
 	  Minutes = bcd2dec(ts.Minutes);
+
+	  HAL_RTC_GetDate(&hrtc, &ds, FORMAT_BCD);
+	  /*convert received date from RTC into decimal values*/
+	  rtc_day 	= bcd2dec(ds.Date);
+	  rtc_month = bcd2dec(ds.Month);
+	  rtc_year 	= bcd2dec(ds.Year) + 2000;
 	  /*
 	   * Seconds is not used
 	  Seconds = bcd2dec(ts.Seconds);
 	   */
 	  /*Calculate the SunSet time
 	   * When user button is pressed, or when RTC Alarm goes on
+	   * Button Pin is RESET when pushed
 	   */
-	  if ((SunSetCalculationFlag == false) || (BSP_PB_GetState(BUTTON_USER) == SET)){
+	  if ((SunSetCalculationFlag == false) || (HAL_GPIO_ReadPin(USER_BUTTON_GPIO_PORT, USER_BUTTON_PIN) == GPIO_PIN_RESET)){
 		  LED1_LOW();
 		  /*Get RTC date and copy into variables*/
-		  HAL_RTC_GetDate(&hrtc, &ds, FORMAT_BIN);
+		  HAL_RTC_GetDate(&hrtc, &ds, FORMAT_BCD);
 		  /*convert received date from RTC into decimal values*/
 		  rtc_day 	= bcd2dec(ds.Date);
 		  rtc_month = bcd2dec(ds.Month);
-		  rtc_year 	= bcd2dec(ds.Year);
+		  rtc_year 	= bcd2dec(ds.Year) + 2000;
 		  /*Calculate the Julian Date with the received y, m d*/
 		  JD = calcJD(rtc_year, rtc_month, rtc_day);
 		  /*Calculate the SunSet and SunRise times*/
@@ -160,6 +170,9 @@ int main(void){
 		  /*SunSet Hours for the LIGHTS*/
 		  SunSetHrs = (SunSetLT-ExtraMinutesSmr)/60;
 		  SunSetMin = (SunSetLT-ExtraMinutesSmr)%60;
+
+		  /*Set the flag to true*/
+		  SunSetCalculationFlag = true;
 	  }
 
 

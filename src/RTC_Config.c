@@ -20,8 +20,8 @@ void RTC_Configuration(void){
 void SetTime_Configuration(unsigned char Hours, unsigned char Minutes){
 
 	RTC_TimeTypeDef RTC_TimeStructure;
-	RTC_TimeStructure.Hours = 0x0A; //Hours;
-	RTC_TimeStructure.Minutes = 0x02; //Minutes;
+	RTC_TimeStructure.Hours = Hours;
+	RTC_TimeStructure.Minutes = Minutes;
 	RTC_TimeStructure.Seconds = 0x00;
 	RTC_TimeStructure.TimeFormat = RTC_HOURFORMAT_24;
 	RTC_TimeStructure.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
@@ -32,9 +32,9 @@ void SetTime_Configuration(unsigned char Hours, unsigned char Minutes){
 void SetDate_Configuration(unsigned char Year, unsigned char Month, unsigned char Date){
 
 	RTC_DateTypeDef RTC_DateStructure;
-	RTC_DateStructure.Year = 0x0F; //Year;
-	RTC_DateStructure.Month = 0x0B; //Month;
-	RTC_DateStructure.Date = 0x12; //Date;
+	RTC_DateStructure.Year = Year;
+	RTC_DateStructure.Month =Month;
+	RTC_DateStructure.Date = Date;
 	HAL_RTC_SetDate(&hrtc, &RTC_DateStructure, RTC_FORMAT_BIN);
 }
 
