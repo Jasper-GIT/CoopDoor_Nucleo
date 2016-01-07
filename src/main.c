@@ -32,14 +32,19 @@ volatile unsigned TickLow;            /*Count duration of logic low level*/
 static unsigned char DCF_Array[59];   /*The DCF time array, 60 bits*/
 static int DCF_Index;
 uint8_t CEST;                         /*Central European Summer Time BIT*/
-extern RTC_HandleTypeDef hrtc;
+RTC_HandleTypeDef hrtc;
+
+RTC_TimeTypeDef ts;
+RTC_DateTypeDef ds;
+RTC_AlarmTypeDef as;
 /* Private function prototypes -----------------------------------------------*/
 //void SystemClock_Config(void);
 void StepperMotor(uint8_t Direction, uint32_t Steps);
 uint8_t bcd2dec(uint8_t i);
-void SysTick_Handler(void);
+//void SysTick_Handler(void);
 //void SetTime_Configuration(unsigned char Hours, unsigned char Minutes);
-
+void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc);
+void HAL_RTC_AlarmBEventCallback(RTC_HandleTypeDef *hrtc);
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -50,10 +55,9 @@ void SysTick_Handler(void);
   * @retval None
   */
 int main(void){
-	RTC_TimeTypeDef ts;
-	RTC_DateTypeDef ds;
 	uint8_t Hours = 0;
 	uint8_t Minutes = 0;
+	uint8_t Seconds = 0;
 	int SunSet;
 	int SunSetLT;
 	int SunRise;
@@ -71,7 +75,8 @@ int main(void){
 	int month = 1;
 	int day = 6;
 	int hour = 16;
-	int minutes = 44;
+	int minutes = 47;
+
 	/* The door will be closed after Sunset + Extra minutes.
 	 * these minutes can be different for winter and summer
 	 */
@@ -105,6 +110,8 @@ int main(void){
   RCC_Configuration();
   RTC_Configuration();
   GPIO_Configuration();
+  Update_RTC();
+
   //MX_RTC_Init();
 
   /*
@@ -113,6 +120,16 @@ int main(void){
    * */
   RELAY_1_LOW();
   RELAY_2_LOW();
+
+  HAL_RTC_GetAlarm(&hrtc, &as, RTC_ALARM_A, FORMAT_BCD);
+  Hours   = bcd2dec(as.AlarmTime.Hours);
+  Minutes = bcd2dec(as.AlarmTime.Minutes);
+  Seconds = bcd2dec(as.AlarmTime.Seconds);
+
+   HAL_RTC_GetAlarm(&hrtc, &as, RTC_ALARM_B, FORMAT_BCD);
+   Hours   = bcd2dec(as.AlarmTime.Hours);
+   Minutes = bcd2dec(as.AlarmTime.Minutes);
+   Seconds = bcd2dec(as.AlarmTime.Seconds);
 
 
   //SetTime_Configuration(0x09, 0x37);
@@ -130,12 +147,14 @@ int main(void){
 	  /*Convert the received HMS in BCD format to DEC format*/
 	  Hours   = bcd2dec(ts.Hours);
 	  Minutes = bcd2dec(ts.Minutes);
+	  Seconds = bcd2dec(ts.Seconds);
 
 	  HAL_RTC_GetDate(&hrtc, &ds, FORMAT_BCD);
 	  /*convert received date from RTC into decimal values*/
 	  rtc_day 	= bcd2dec(ds.Date);
 	  rtc_month = bcd2dec(ds.Month);
 	  rtc_year 	= bcd2dec(ds.Year) + 2000;
+
 	  /*
 	   * Seconds is not used
 	  Seconds = bcd2dec(ts.Seconds);
@@ -248,10 +267,17 @@ void StepperMotor(uint8_t Direction, uint32_t Steps){
   		}
   	}
 }
+/*
+ * @brief, This function handles the system interrupt.
+ * every 10ms, this function is called and check for DCF_INPUT.
+ * When +/- 100ms high, write a 0 into array. at 200ms write a 1.
+ * In this way, we collect 60bits in 1 minute.
+ * In these 60 bit, the time and date are coded in BCD.
+ */
 
-void SysTick_Handler(void){
+
+void HAL_SYSTICK_Callback(void){
 	HAL_IncTick();
-	HAL_SYSTICK_IRQHandler();
 	if(HAL_GPIO_ReadPin(DCF_INPUT_GPIO_PORT, DCF_INPUT) == GPIO_PIN_SET){
 		LED2_HIGH();
 		/*Count duration logic high level*/
@@ -269,7 +295,7 @@ void SysTick_Handler(void){
 	}
 
 	if(HAL_GPIO_ReadPin(DCF_INPUT_GPIO_PORT, DCF_INPUT) == GPIO_PIN_RESET){
-		LED2_LOW();
+		//LED2_LOW();
 		/*When signal is high between 30 and 130 ms, it's a 0*/
 		if((TickHigh > 3) && (TickHigh < 13)){
 			/*Store it as a 0 and increment index bit*/
@@ -292,7 +318,19 @@ void SysTick_Handler(void){
 	}
 }
 
+/*
+ * @brief, this is the callback function from RTC alarm.
+ * handles the RTC Alarm interrupt A and B.
+ */
+void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc){
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	Update_RTC();
+}
 
+void  HAL_RTCEx_AlarmBEventCallback(RTC_HandleTypeDef *hrtc){
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	Update_RTC();
+}
 
 
 

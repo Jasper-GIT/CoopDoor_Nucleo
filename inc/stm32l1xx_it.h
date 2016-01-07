@@ -45,7 +45,7 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 
-//void SysTick_Handler(void);
+void SysTick_Handler(void);
 void RTC_Alarm_IRQHandler(void);
 
 #ifdef __cplusplus

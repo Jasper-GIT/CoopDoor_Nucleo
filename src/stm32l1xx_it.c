@@ -31,6 +31,10 @@ extern RTC_HandleTypeDef hrtc;
   * @retval None
   */
 
+void SysTick_Handler(void){
+	HAL_SYSTICK_IRQHandler();
+}
+
 
 /******************************************************************************/
 /* STM32L1xx Peripheral Interrupt Handlers                                    */
@@ -42,15 +46,6 @@ extern RTC_HandleTypeDef hrtc;
 /**
 * @brief This function handles RTC alarms A and B interrupt through EXTI line17.
 */
-void RTC_Alarm_IRQHandler(void)
-{
-  /* USER CODE BEGIN RTC_Alarm_IRQn 0 */
-
-  /* USER CODE END RTC_Alarm_IRQn 0 */
+void RTC_Alarm_IRQHandler(void){
   HAL_RTC_AlarmIRQHandler(&hrtc);
-  /* USER CODE BEGIN RTC_Alarm_IRQn 1 */
-	if (__HAL_RTC_ALARM_GET_IT(&hrtc, RTC_IT_ALRA) != RESET){
-		 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-	}
-  /* USER CODE END RTC_Alarm_IRQn 1 */
 }

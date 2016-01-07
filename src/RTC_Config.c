@@ -33,7 +33,7 @@ void SetDate_Configuration(unsigned char Year, unsigned char Month, unsigned cha
 
 	RTC_DateTypeDef RTC_DateStructure;
 	RTC_DateStructure.Year = Year;
-	RTC_DateStructure.Month =Month;
+	RTC_DateStructure.Month = Month;
 	RTC_DateStructure.Date = Date;
 	HAL_RTC_SetDate(&hrtc, &RTC_DateStructure, RTC_FORMAT_BIN);
 }
@@ -44,35 +44,38 @@ void SetDate_Configuration(unsigned char Year, unsigned char Month, unsigned cha
 
 void Update_RTC(){
 
-	HAL_RTC_DeactivateAlarm(&hrtc, RTC_ALARM_A);
-	HAL_RTC_DeactivateAlarm(&hrtc, RTC_ALARM_B);
+  RTC_AlarmTypeDef sAlarm;
+    /**Enable the Alarm A
+    */
+  sAlarm.AlarmTime.Hours = 16;
+  sAlarm.AlarmTime.Minutes = 47;
+  sAlarm.AlarmTime.Seconds = 15;
+  sAlarm.AlarmTime.TimeFormat = RTC_HOURFORMAT_24;
+  sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  sAlarm.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
+  sAlarm.AlarmSubSecondMask = RTC_ALARMSUBSECONDMASK_ALL;
+  sAlarm.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
+  sAlarm.AlarmDateWeekDay = 6;
+  sAlarm.Alarm = RTC_ALARM_A;
+  HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, FORMAT_BIN);
 
-	RTC_AlarmTypeDef RTC_AlarmStructure;
-	RTC_AlarmStructure.AlarmTime.Hours   = 0x0A;
-	RTC_AlarmStructure.AlarmTime.Minutes = 0x03;
- 	RTC_AlarmStructure.AlarmTime.Seconds = 0x00;
- 	RTC_AlarmStructure.AlarmDateWeekDay = 0x12;
- 	RTC_AlarmStructure.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
- 	RTC_AlarmStructure.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
- 	RTC_AlarmStructure.Alarm = RTC_ALARM_A;
- 	HAL_RTC_SetAlarm_IT(&hrtc, &RTC_AlarmStructure, RTC_FORMAT_BIN);
+    /**Enable the Alarm B
+    */
+  sAlarm.AlarmTime.Hours = 16;
+  sAlarm.AlarmTime.Minutes = 47;
+  sAlarm.AlarmTime.Seconds = 5;
+  sAlarm.AlarmTime.TimeFormat = RTC_HOURFORMAT_24;
+  sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  sAlarm.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
+  sAlarm.AlarmSubSecondMask = RTC_ALARMSUBSECONDMASK_ALL;
+  sAlarm.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
+  sAlarm.AlarmDateWeekDay = 6;
+  sAlarm.Alarm = RTC_ALARM_B;
+  HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, FORMAT_BIN);
 
- 	RTC_AlarmStructure.AlarmTime.Hours   = 0x0A;
- 	RTC_AlarmStructure.AlarmTime.Minutes = 0x04;
- 	RTC_AlarmStructure.AlarmTime.Seconds = 0x00;
- 	RTC_AlarmStructure.AlarmDateWeekDay = 0x12;
- 	RTC_AlarmStructure.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
- 	RTC_AlarmStructure.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
- 	RTC_AlarmStructure.Alarm = RTC_ALARM_B;
- 	HAL_RTC_SetAlarm_IT(&hrtc, &RTC_AlarmStructure, RTC_FORMAT_BIN);
 
-    __HAL_RTC_ALARMA_ENABLE(&hrtc);
-    /* Configure the Alarm interrupt */
-    __HAL_RTC_ALARM_ENABLE_IT(&hrtc,RTC_IT_ALRA);
-
-    __HAL_RTC_ALARMB_ENABLE(&hrtc);
-        /* Configure the Alarm interrupt */
-        __HAL_RTC_ALARM_ENABLE_IT(&hrtc,RTC_IT_ALRB);
 }
 
 

@@ -64,6 +64,9 @@ void RCC_Configuration(void){
 	    //Error_Handler();
 	  }
 
+	  __HAL_RCC_PWR_CLK_ENABLE();
+	  HAL_PWR_EnableBkUpAccess();
+
 
 	  RCC_OscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE;
 	  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
@@ -88,11 +91,13 @@ void RCC_Configuration(void){
 	  /* SysTick_IRQn interrupt configuration */
 	  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 2);
 
+	  /*##-2- Enable RTC peripheral Clocks #######################################*/
+	  /* Enable RTC Clock */
+	  __HAL_RCC_RTC_ENABLE();
 
-
-	 __HAL_RCC_RTC_ENABLE();
-	  __HAL_RCC_PWR_CLK_ENABLE();
-	  HAL_PWR_EnableBkUpAccess();
+	  /*##-4- Configure the NVIC for RTC Alarm ###################################*/
+	  HAL_NVIC_SetPriority(RTC_Alarm_IRQn, 0, 3);
+	  HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn);
 
 	}
 
