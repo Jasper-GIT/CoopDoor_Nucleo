@@ -48,8 +48,8 @@ void Update_RTC(){
     /**Enable the Alarm A
     */
   sAlarm.AlarmTime.Hours = 16;
-  sAlarm.AlarmTime.Minutes = 47;
-  sAlarm.AlarmTime.Seconds = 15;
+  sAlarm.AlarmTime.Minutes = 44;
+  sAlarm.AlarmTime.Seconds = 10;
   sAlarm.AlarmTime.TimeFormat = RTC_HOURFORMAT_24;
   sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
   sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
@@ -63,8 +63,8 @@ void Update_RTC(){
     /**Enable the Alarm B
     */
   sAlarm.AlarmTime.Hours = 16;
-  sAlarm.AlarmTime.Minutes = 47;
-  sAlarm.AlarmTime.Seconds = 5;
+  sAlarm.AlarmTime.Minutes = 43;
+  sAlarm.AlarmTime.Seconds = 55;
   sAlarm.AlarmTime.TimeFormat = RTC_HOURFORMAT_24;
   sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
   sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;

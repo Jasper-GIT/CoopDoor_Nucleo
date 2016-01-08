@@ -13,6 +13,21 @@
 
 
 /* Private typedef -----------------------------------------------------------*/
+typedef struct {
+	int SunSetUTC;
+	int SunSetLT;
+	unsigned char Hour;
+	unsigned char Minutes;
+	unsigned char HoursLT;
+}SunSetTypeDef;
+
+typedef struct {
+	int SunRiseUTC;
+	int SunRiseLT;
+	unsigned char Hour;
+	unsigned char Minutes;
+	unsigned char HoursLT;
+}SunRiseTypeDef;
 /* Private define ------------------------------------------------------------*/
 #define CLOSEDOOR 1
 #define OPENDOOR 0
@@ -24,7 +39,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 uint16_t StepperDelay = 300;
-bool SunSetCalculationFlag = false;   /*Set this bit True when sunset calculation needs to be done*/
+bool SunSetCalculationFlag = true;   /*Set this bit True when sunset calculation needs to be done*/
 bool DoorOpen = true;
 bool LightsON = false;
 volatile unsigned TickHigh;           /*Count duration of logic high level*/
@@ -38,16 +53,15 @@ RTC_TimeTypeDef ts;
 RTC_DateTypeDef ds;
 RTC_AlarmTypeDef as;
 /* Private function prototypes -----------------------------------------------*/
-//void SystemClock_Config(void);
 void StepperMotor(uint8_t Direction, uint32_t Steps);
 uint8_t bcd2dec(uint8_t i);
-//void SysTick_Handler(void);
-//void SetTime_Configuration(unsigned char Hours, unsigned char Minutes);
+void HAL_SYSTICK_Callback(void);
 void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc);
-void HAL_RTC_AlarmBEventCallback(RTC_HandleTypeDef *hrtc);
-
+void HAL_RTCEx_AlarmBEventCallback(RTC_HandleTypeDef *hrtc);
+void SunSetCalculation(SunSetTypeDef *sunset_p, SunRiseTypeDef *sunrise_p);
 
 /* Private functions ---------------------------------------------------------*/
+
 
 /**
   * @brief  Main program
@@ -58,15 +72,10 @@ int main(void){
 	uint8_t Hours = 0;
 	uint8_t Minutes = 0;
 	uint8_t Seconds = 0;
-	int SunSet;
-	int SunSetLT;
-	int SunRise;
-	int SunRiseLT;
+
 	uint16_t rtc_year;
 	uint8_t rtc_month;
 	uint8_t rtc_day;
-	float JD; // This is the Julian Date
-	SunSetCalculationFlag = true;
 
 	/* The folowing integers are for testing purpose,
 	 * Here we can set the y/m/d to write into RTC
@@ -75,24 +84,13 @@ int main(void){
 	int month = 1;
 	int day = 6;
 	int hour = 16;
-	int minutes = 47;
+	int minutes = 44;
 
-	/* The door will be closed after Sunset + Extra minutes.
-	 * these minutes can be different for winter and summer
-	 */
-	uint8_t ExtraMinutesWntr = 60;
-	uint8_t ExtraMinutesSmr  = 60;
 
-	unsigned char SunSetHours;
-	unsigned char SunSetHrs;
-	unsigned char SunSetMinutes;
-	unsigned char SunSetMin;
-	unsigned char SunRiseHours;
-	unsigned char SunRiseMinutes;
-
-	/* GPS Location @home LAT/LON */
-	double latitude = 51.50;
-	double longitude = -5.46;
+	SunSetTypeDef sunset = {0};
+	SunSetTypeDef *sunset_p = &sunset;
+	SunRiseTypeDef sunrise = {0};
+	SunRiseTypeDef *sunrise_p = &sunrise;
 
   /* STM32L1xx HAL library initialization:
        - Configure the Flash prefetch
@@ -121,20 +119,6 @@ int main(void){
   RELAY_1_LOW();
   RELAY_2_LOW();
 
-  HAL_RTC_GetAlarm(&hrtc, &as, RTC_ALARM_A, FORMAT_BCD);
-  Hours   = bcd2dec(as.AlarmTime.Hours);
-  Minutes = bcd2dec(as.AlarmTime.Minutes);
-  Seconds = bcd2dec(as.AlarmTime.Seconds);
-
-   HAL_RTC_GetAlarm(&hrtc, &as, RTC_ALARM_B, FORMAT_BCD);
-   Hours   = bcd2dec(as.AlarmTime.Hours);
-   Minutes = bcd2dec(as.AlarmTime.Minutes);
-   Seconds = bcd2dec(as.AlarmTime.Seconds);
-
-
-  //SetTime_Configuration(0x09, 0x37);
-  //SetDate_Configuration(0x0F, 0x0B, 0x12);
- // Update_RTC();
   SetDate_Configuration(year, month, day);
   HAL_Delay(200);
   SetTime_Configuration(hour, minutes);
@@ -155,58 +139,20 @@ int main(void){
 	  rtc_month = bcd2dec(ds.Month);
 	  rtc_year 	= bcd2dec(ds.Year) + 2000;
 
-	  /*
-	   * Seconds is not used
-	  Seconds = bcd2dec(ts.Seconds);
-	   */
+
 	  /*Calculate the SunSet time
 	   * When user button is pressed, or when RTC Alarm goes on
 	   * Button Pin is RESET when pushed
 	   */
 	  if ((SunSetCalculationFlag == false) || (HAL_GPIO_ReadPin(USER_BUTTON_GPIO_PORT, USER_BUTTON_PIN) == GPIO_PIN_RESET)){
-		  LED1_LOW();
-		  /*Get RTC date and copy into variables*/
-		  HAL_RTC_GetDate(&hrtc, &ds, FORMAT_BCD);
-		  /*convert received date from RTC into decimal values*/
-		  rtc_day 	= bcd2dec(ds.Date);
-		  rtc_month = bcd2dec(ds.Month);
-		  rtc_year 	= bcd2dec(ds.Year) + 2000;
-		  /*Calculate the Julian Date with the received y, m d*/
-		  JD = calcJD(rtc_year, rtc_month, rtc_day);
-		  /*Calculate the SunSet and SunRise times*/
-		  SunSet = calcSunsetUTC(JD, latitude, longitude);
-		  SunRise = calcSunriseUTC(JD, latitude, longitude);
-		  /*
-		   * Since the Sunset/rise is calculated in UTC, we have to add an extra hour,
-		   * and during daylight saving time 2 hours.
-		   * add the extra minutes to close the door later
-		   */
-		  if (CEST == 1){
-			  SunSetLT = SunSet + 120 + ExtraMinutesSmr;
-			  SunRiseLT = SunRise + 120;
-		  }
-		  else{
-			  SunSetLT = SunSet + 60 + ExtraMinutesWntr;
-			  SunRiseLT = SunRise +60;
-		  }
-		  SunSetHours = SunSetLT/60;
-		  SunSetMinutes = SunSetLT%60;
-		  SunRiseHours = SunRiseLT/60;
-		  SunRiseMinutes = SunRiseLT%60;
-
-		  /*SunSet Hours for the LIGHTS*/
-		  SunSetHrs = (SunSetLT-ExtraMinutesSmr)/60;
-		  SunSetMin = (SunSetLT-ExtraMinutesSmr)%60;
-
-		  /*Set the flag to true*/
-		  SunSetCalculationFlag = true;
+		  SunSetCalculation(&sunset, &sunrise);
 	  }
 
 
 	  /*
 	   * This function will Close the ChickenCoopDoor
 	   */
-	  if ((Hours == SunSetHours) && (Minutes == SunSetMinutes) && (DoorOpen == true)){
+	  if ((Hours == sunset_p->HoursLT) && (Minutes == sunset_p->Minutes) && (DoorOpen == true)){
 		  StepperMotor(CLOSEDOOR, STEPS);
 		  DoorOpen = false;
 	  }
@@ -222,12 +168,12 @@ int main(void){
 	   * Switch OFF: @ SunRise and 01.00hrs
 	   */
 
-	  if((LightsON == false) && (((Hours == SunSetHrs) && (Minutes == SunSetMin)) || ((Hours == (SunRiseHours - 2)) && (Minutes == SunRiseMinutes)))){
+	  if((LightsON == false) && (((Hours == sunset_p->HoursLT) && (Minutes == sunset_p->Minutes)) || ((Hours == (sunrise_p->HoursLT - 2)) && (Minutes == sunrise_p->Minutes)))){
 		  RELAY_1_HIGH();
 		  RELAY_2_HIGH();
 		  LightsON = true;
 	  }
-	  else if((LightsON == true) && (((Hours == LIGHTOFFHR) && (Minutes == LIGHTOFFMIN)) || ((Hours == SunRiseHours) && (Minutes == SunRiseMinutes)))){
+	  else if((LightsON == true) && (((Hours == LIGHTOFFHR) && (Minutes == LIGHTOFFMIN)) || ((Hours == sunrise_p->HoursLT) && (Minutes == sunrise_p->Minutes)))){
 		  RELAY_1_LOW();
 		  RELAY_2_LOW();
 		  LightsON = false;
@@ -329,8 +275,44 @@ void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc){
 
 void  HAL_RTCEx_AlarmBEventCallback(RTC_HandleTypeDef *hrtc){
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	SunSetCalculationFlag = false;
 	Update_RTC();
 }
+
+void SunSetCalculation(SunSetTypeDef *sunset_p, SunRiseTypeDef *sunrise_p){
+	float JD; // This is the Julian Date
+
+	/* GPS Location @home LAT/LON */
+	double latitude = 51.50;
+	double longitude = -5.46;
+
+	LED1_LOW();
+	HAL_RTC_GetDate(&hrtc, &ds, FORMAT_BCD);
+	/*Calculate the Julian Date with the received y, m d*/
+	JD = calcJD((bcd2dec(ds.Year) + 2000), (bcd2dec(ds.Month)), (bcd2dec(ds.Date)));
+	/*Calculate the SunSet and SunRise times*/
+	sunset_p->SunSetUTC = calcSunsetUTC(JD, latitude, longitude);
+	sunrise_p->SunRiseUTC = calcSunriseUTC(JD, latitude, longitude);
+	/*
+	* Since the Sunset/rise is calculated in UTC, we have to add an extra hour,
+	* and during daylight saving time 2 hours.
+	* add the extra minutes to close the door later
+	*/
+	if (CEST == 1){
+		sunset_p->SunSetLT = sunset_p->SunSetUTC + 120;
+		sunrise_p->SunRiseLT = sunrise_p->SunRiseUTC + 120;
+	}
+	else{
+		sunset_p->SunSetLT = sunset_p->SunSetUTC + 60;
+		sunrise_p->SunRiseLT = sunrise_p->SunRiseUTC + 60;
+	}
+	sunset_p->HoursLT = sunset_p->SunSetLT/60;
+	sunset_p->Minutes = sunset_p->SunSetLT%60;
+	sunrise_p->HoursLT = sunrise_p->SunRiseLT/60;
+	sunrise_p->Minutes = sunrise_p->SunRiseLT%60;
+	SunSetCalculationFlag = true;
+}
+
 
 
 
