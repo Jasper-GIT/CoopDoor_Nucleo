@@ -15,8 +15,6 @@
 
 void Read_BCD(unsigned char cur_bit, unsigned char bitnr, unsigned char *resultaat);
 void Decode (unsigned char dec_array[59], uint8_t *cest_pointer);
-void CheckForUpdate(unsigned char Hours, unsigned char Minutes);
 void TimeUpdateStatusFlag(int clear);
-
 
 #endif /* DCF_HANDLER_H_ */

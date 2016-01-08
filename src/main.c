@@ -118,11 +118,12 @@ int main(void){
    * */
   RELAY_1_LOW();
   RELAY_2_LOW();
-
+  /*FOR TESTING PURPOSES*/
+  /*
   SetDate_Configuration(year, month, day);
   HAL_Delay(200);
   SetTime_Configuration(hour, minutes);
-
+  */
   while (1)
   {
 
@@ -133,13 +134,6 @@ int main(void){
 	  Minutes = bcd2dec(ts.Minutes);
 	  Seconds = bcd2dec(ts.Seconds);
 
-	  HAL_RTC_GetDate(&hrtc, &ds, FORMAT_BCD);
-	  /*convert received date from RTC into decimal values*/
-	  rtc_day 	= bcd2dec(ds.Date);
-	  rtc_month = bcd2dec(ds.Month);
-	  rtc_year 	= bcd2dec(ds.Year) + 2000;
-
-
 	  /*Calculate the SunSet time
 	   * When user button is pressed, or when RTC Alarm goes on
 	   * Button Pin is RESET when pushed
@@ -149,9 +143,7 @@ int main(void){
 	  }
 
 
-	  /*
-	   * This function will Close the ChickenCoopDoor
-	   */
+	  /*This function will Close the ChickenCoopDoor*/
 	  if ((Hours == sunset_p->HoursLT) && (Minutes == sunset_p->Minutes) && (DoorOpen == true)){
 		  StepperMotor(CLOSEDOOR, STEPS);
 		  DoorOpen = false;
@@ -241,7 +233,7 @@ void HAL_SYSTICK_Callback(void){
 	}
 
 	if(HAL_GPIO_ReadPin(DCF_INPUT_GPIO_PORT, DCF_INPUT) == GPIO_PIN_RESET){
-		//LED2_LOW();
+		LED2_LOW();
 		/*When signal is high between 30 and 130 ms, it's a 0*/
 		if((TickHigh > 3) && (TickHigh < 13)){
 			/*Store it as a 0 and increment index bit*/
@@ -270,13 +262,12 @@ void HAL_SYSTICK_Callback(void){
  */
 void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc){
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-	Update_RTC();
+    TimeUpdateStatusFlag(0);
 }
 
 void  HAL_RTCEx_AlarmBEventCallback(RTC_HandleTypeDef *hrtc){
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
 	SunSetCalculationFlag = false;
-	Update_RTC();
 }
 
 void SunSetCalculation(SunSetTypeDef *sunset_p, SunRiseTypeDef *sunrise_p){

@@ -132,9 +132,9 @@ void Decode (unsigned char dec_array[59], uint8_t *cest_pointer)
       HAL_Delay(200);
       SetTime_Configuration(dcf_uur, dcf_min);
       /*Indicate that time is updated*/
-      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+      LED1_HIGH();
       TimeUpdateStatusFlag(1);
-      Update_RTC();
+//      Update_RTC();
 //      SunSetCalculationFlag = false;
     }
   }
@@ -168,15 +168,4 @@ void Read_BCD(unsigned char cur_bit, unsigned char bitnr, unsigned char *resulta
       break;
   }
 }
-
-/*
-The function below sets the Timestatus to false at 5.30 in the morning
-When TimeStatus is set to false, the RTC is updated within the next complete received time frame
-*/
-void CheckForUpdate(unsigned char Hours, unsigned char Minutes){
-  if ((Hours == 05) && (Minutes == 30)){
-    TimeStatus = false;
-  }
-}
-
 
